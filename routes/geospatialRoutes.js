@@ -62,59 +62,20 @@ router.post('/upload', upload.single('file'), (req, res) => {
     }
 });
 
+ // Endpoint to update GeoJSON data
+ router.put('/update-geojson', (req, res) => {
+  const updatedData = req.body.updatedData;
 
-
-  
-
-// CRUD operations for geospatial data
-
-// Create geospatial data
-router.post('/', (req, res) => {
-  const { userId, geospatialData } = req.body;
-  db.run('INSERT INTO user_geospatial (user_id, geospatial_data) VALUES (?, ?)', [userId, geospatialData], (err) => {
+  // Update the GeoJSON data in the database
+  db.run('UPDATE user_geospatial SET geospatial_data = ? WHERE user_id = ?', [updatedData, req.body.userId], (err) => {
     if (err) {
       console.error('Database error:', err);
-      return res.status(500).json({ error: 'Failed to create geospatial data' });
+      return res.status(500).json({ error: 'Failed to update GeoJSON data in the database' });
     }
-    res.status(201).json({ message: 'Geospatial data created successfully' });
+
+    res.status(200).json({ message: 'GeoJSON data updated successfully in the database' });
   });
 });
 
-// Update geospatial data
-router.put('/:id', (req, res) => {
-  const { id } = req.params;
-  const { geospatialData } = req.body;
-  db.run('UPDATE user_geospatial SET geospatial_data = ? WHERE id = ?', [geospatialData, id], (err) => {
-    if (err) {
-      console.error('Database error:', err);
-      return res.status(500).json({ error: 'Failed to update geospatial data' });
-    }
-    res.json({ message: 'Geospatial data updated successfully' });
-  });
-});
-
-// Retrieve geospatial data by user ID
-router.get('/:userId', (req, res) => {
-  const { userId } = req.params;
-  db.all('SELECT * FROM user_geospatial WHERE user_id = ?', [userId], (err, rows) => {
-    if (err) {
-      console.error('Database error:', err);
-      return res.status(500).json({ error: 'Failed to retrieve geospatial data' });
-    }
-    res.json({ geospatialData: rows });
-  });
-});
-
-// Delete geospatial data by ID
-router.delete('/:id', (req, res) => {
-  const { id } = req.params;
-  db.run('DELETE FROM user_geospatial WHERE id = ?', [id], (err) => {
-    if (err) {
-      console.error('Database error:', err);
-      return res.status(500).json({ error: 'Failed to delete geospatial data' });
-    }
-    res.json({ message: 'Geospatial data deleted successfully' });
-  });
-});
 
 module.exports = router;
