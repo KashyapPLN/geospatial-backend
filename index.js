@@ -9,9 +9,7 @@ const sqlite3 = require('sqlite3').verbose();
 
 // Middleware
 app.use(bodyParser.json());
-app.use(cors({
-    origin: '*'
-  }));
+app.use(cors());
   
 
 // Routes
