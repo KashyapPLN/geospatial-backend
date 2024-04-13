@@ -1,5 +1,3 @@
-// index.js
-
 import express from 'express';
 import bodyParser from 'body-parser';
 import cors from 'cors';
@@ -25,7 +23,11 @@ async function createConnection() {
   return client;
 }
 
-export const client = await createConnection();
+// Export an async function that initializes the connection and returns the client
+export async function getClient() {
+  const client = await createConnection();
+  return client;
+}
 
 // Routes
 // Example route

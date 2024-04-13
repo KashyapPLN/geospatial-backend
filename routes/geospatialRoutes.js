@@ -2,7 +2,7 @@ import express from 'express';
 import multer from 'multer';
 import fs from 'fs';
 import path from 'path';
-import { client } from '../index.js'; // Import MongoDB client
+import { getClient } from '../index.js'; // Import getClient function instead of client
 import { ObjectId } from 'mongodb';
 
 const router = express.Router();
@@ -41,6 +41,7 @@ router.post('/upload', upload.single('file'), async (req, res) => {
     // Process the uploaded file based on its format
     if (fileExt === '.geojson') {
         try {
+            const client = await getClient(); // Get MongoDB client
             const db = client.db(DATABASE_NAME); // Use DATABASE_NAME here
 
             // Read the GeoJSON file
@@ -74,6 +75,7 @@ router.put('/update-geojson', async (req, res) => {
     const userId = req.body.userId; // Convert userId to ObjectId
 
     try {
+        const client = await getClient(); // Get MongoDB client
         const db = client.db(DATABASE_NAME); // Use DATABASE_NAME here
 
         // Update the GeoJSON data in the database

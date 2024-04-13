@@ -1,5 +1,5 @@
 import bcrypt from 'bcryptjs';
-import { client } from '../index.js'; // Import MongoDB client
+import { getClient } from '../index.js'; // Import getClient function instead of client
 import { ObjectId } from 'mongodb';
 
 // Define the MongoDB database name
@@ -10,6 +10,7 @@ export const signup = async (req, res) => {
   const { email, password } = req.body;
 
   try {
+    const client = await getClient(); // Get MongoDB client
     const db = client.db(DATABASE_NAME); // Specify the database name
 
     // Check if email is already registered
@@ -40,6 +41,7 @@ export const login = async (req, res) => {
   const { email, password } = req.body;
 
   try {
+    const client = await getClient(); // Get MongoDB client
     const db = client.db(DATABASE_NAME); // Specify the database name
 
     // Find user by email
