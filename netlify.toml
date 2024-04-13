@@ -1,14 +1,31 @@
-[build]
-  command = "npm run build"
-  functions = "functions/"
+# netlify.toml
 
+# Specify build settings
+[build]
+  command = ""  # No build command as there's no build step
+  functions = ""  # No separate functions directory
+
+# Specify redirect rules for routing
 [[redirects]]
-  from = "/api/*"
-  to = "/.netlify/functions/:splat"
+  from = "/auth/*"
+  to = "/.netlify/functions/authRoutes/:splat"
   status = 200
 
+[[redirects]]
+  from = "/geospatial/*"
+  to = "/.netlify/functions/geospatialRoutes/:splat"
+  status = 200
+
+# Optional: Configure headers for CORS if needed
 [[headers]]
-  for = "/api/*"
+  for = "/auth/*"
+    [headers.values]
+    Access-Control-Allow-Origin = "*"
+    Access-Control-Allow-Methods = "GET, POST, PUT, DELETE"
+    Access-Control-Allow-Headers = "Content-Type"
+
+[[headers]]
+  for = "/geospatial/*"
     [headers.values]
     Access-Control-Allow-Origin = "*"
     Access-Control-Allow-Methods = "GET, POST, PUT, DELETE"
