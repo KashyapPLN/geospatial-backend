@@ -1,41 +1,44 @@
-const express = require('express');
-const bodyParser = require('body-parser');
-const authRoutes = require('./routes/authRoutes');
-const geospatialRoutes = require('./routes/geospatialRoutes');
-const cors = require('cors');
+// index.js
+
+import express from 'express';
+import bodyParser from 'body-parser';
+import cors from 'cors';
+import { MongoClient } from 'mongodb';
+import dotenv from "dotenv";
+import authRoutes from './routes/authRoutes.js';
+import geospatialRoutes from './routes/geospatialRoutes.js';
+
+
 const app = express();
-const bcrypt = require('bcryptjs');
-const sqlite3 = require('sqlite3').verbose();
+dotenv.config();
+const MONGO_URL = process.env.MONGO_URL;
 
 // Middleware
 app.use(bodyParser.json());
 app.use(cors());
-  
+
+// Connect to MongoDB
+async function createConnection() {
+  const client = new MongoClient(MONGO_URL);
+  await client.connect();
+  console.log("Mongo is connected ✌😊");
+  return client;
+}
+
+export const client = await createConnection();
 
 // Routes
 // Example route
 app.get('/', (req, res) => {
-    res.send('Hello, World!');
-  });
+  res.send('Hello, World!');
+});
 
-  app.use('/auth', authRoutes);
-  app.use('/geospatial', geospatialRoutes);
-  
+app.use('/auth', authRoutes);
+app.use('/geospatial', geospatialRoutes);
+
 
 // Start server
 const PORT = process.env.PORT || 5000;
-const db = new sqlite3.Database('database.db');
-
-db.serialize(() => {
-    db.run('CREATE TABLE IF NOT EXISTS users (id TEXT PRIMARY KEY, email TEXT NOT NULL UNIQUE, password TEXT NOT NULL)');
-    db.run('CREATE TABLE IF NOT EXISTS user_geospatial (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id TEXT NOT NULL, geospatial_data TEXT NOT NULL, geospatial_file_path TEXT, FOREIGN KEY (user_id) REFERENCES users(id))');
-    console.log('User geospatial table created');
-
-    // Enable foreign key constraints
-    db.run('PRAGMA foreign_keys = ON;');
-
-    console.log('Connected to SQLite database');
-  });
 app.listen(PORT, () => {
   console.log(`Server is running on port ${PORT}`);
 });

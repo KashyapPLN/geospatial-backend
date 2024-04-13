@@ -1,11 +1,12 @@
-const express = require('express');
-const multer = require('multer');
-const fs = require('fs');
-const path = require('path');
-const sqlite3 = require('sqlite3').verbose();
+import express from 'express';
+import multer from 'multer';
+import fs from 'fs';
+import path from 'path';
+import { client } from '../index.js'; // Import MongoDB client
+import { ObjectId } from 'mongodb';
 
 const router = express.Router();
-const db = new sqlite3.Database('database.db');
+const DATABASE_NAME = 'geo-spatial'; // Define the database name
 
 // Multer configuration for file uploads
 const storage = multer.diskStorage({
@@ -19,7 +20,7 @@ const storage = multer.diskStorage({
 const upload = multer({ storage: storage });
 
 /// Endpoint for uploading GeoJSON or KML files
-router.post('/upload', upload.single('file'), (req, res) => {
+router.post('/upload', upload.single('file'), async (req, res) => {
     if (!req.file) {
         return res.status(400).json({ error: 'No file uploaded' });
     }
@@ -39,43 +40,57 @@ router.post('/upload', upload.single('file'), (req, res) => {
 
     // Process the uploaded file based on its format
     if (fileExt === '.geojson') {
-        // Read the GeoJSON file
-        fs.readFile(filePath, 'utf8', (err, data) => {
-            if (err) {
-                console.error('Error reading file:', err);
-                return res.status(500).json({ error: 'Failed to read file' });
-            }
+        try {
+            const db = client.db(DATABASE_NAME); // Use DATABASE_NAME here
+
+            // Read the GeoJSON file
+            const data = fs.readFileSync(filePath, 'utf8');
 
             // Insert the file path and geospatial data into the database
-            db.run('INSERT INTO user_geospatial (user_id, geospatial_file_path, geospatial_data) VALUES (?, ?, ?)', [userId, filePath, data], (err) => {
-                if (err) {
-                    console.error('Database error:', err);
-                    return res.status(500).json({ error: 'Failed to store file' });
-                }
-                // Send the GeoJSON data along with the file upload success message
-                res.status(201).json({ message: 'File uploaded successfully', filePath, fileType, geoJSONData: JSON.parse(data) });
+            const result = await db.collection('user_geospatial').insertOne({
+                user_id: new ObjectId(userId), // Convert userId to ObjectId
+                geospatial_file_path: filePath,
+                geospatial_data: data
             });
-        });
+
+            // Send the GeoJSON data along with the file upload success message
+            res.status(201).json({ message: 'File uploaded successfully', filePath, fileType, geoJSONData: JSON.parse(data) });
+        } catch (error) {
+            console.error('MongoDB error:', error);
+            res.status(500).json({ error: 'Failed to store file' });
+        } finally {
+            // Delete the uploaded file after processing
+            fs.unlinkSync(filePath);
+        }
     } else {
         // Unsupported file format
         return res.status(400).json({ error: 'Unsupported file format' });
     }
 });
 
- // Endpoint to update GeoJSON data
- router.put('/update-geojson', (req, res) => {
-  const updatedData = req.body.updatedData;
+// Endpoint to update GeoJSON data
+router.put('/update-geojson', async (req, res) => {
+    const updatedData = req.body.updatedData;
+    const userId = req.body.userId; // Convert userId to ObjectId
 
-  // Update the GeoJSON data in the database
-  db.run('UPDATE user_geospatial SET geospatial_data = ? WHERE user_id = ?', [updatedData, req.body.userId], (err) => {
-    if (err) {
-      console.error('Database error:', err);
-      return res.status(500).json({ error: 'Failed to update GeoJSON data in the database' });
+    try {
+        const db = client.db(DATABASE_NAME); // Use DATABASE_NAME here
+
+        // Update the GeoJSON data in the database
+        const result = await db.collection('user_geospatial').updateOne(
+            { user_id: new ObjectId(userId) }, // Convert userId to ObjectId
+            { $set: { geospatial_data: updatedData } }
+        );
+
+        if (result.modifiedCount === 0) {
+            return res.status(404).json({ error: 'User not found or no data updated' });
+        }
+
+        res.status(200).json({ message: 'GeoJSON data updated successfully in the database' });
+    } catch (error) {
+        console.error('MongoDB error:', error);
+        res.status(500).json({ error: 'Failed to update GeoJSON data in the database' });
     }
-
-    res.status(200).json({ message: 'GeoJSON data updated successfully in the database' });
-  });
 });
 
-
-module.exports = router;
+export default router;
