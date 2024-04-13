@@ -2,7 +2,7 @@
 
 # Specify build settings
 [build]
-  command = ""  # No build command as there's no build step
+  command = "npm run build" 
   functions = ""  # No separate functions directory
 
 # Specify redirect rules for routing
