@@ -26,6 +26,7 @@ async function createConnection() {
 // Export an async function that initializes the connection and returns the client
 export async function getClient() {
   const client = await createConnection();
+  module.exports=app;
   return client;
 }
 
@@ -43,4 +44,7 @@ app.use('/geospatial', geospatialRoutes);
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
   console.log(`Server is running on port ${PORT}`);
+  
 });
+
+
